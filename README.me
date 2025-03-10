@@ -1,0 +1,38 @@
+to start:
+uvicorn query_api:app --reload
+
+
+Ollama API test: 
+curl -X POST http://127.0.0.1:11434/api/generate \
+     -H "Content-Type: application/json" \
+     -d '{"model": "deepseek-r1", "prompt": "Explain diabetes."}'
+Server api test:
+curl "http://127.0.0.1:8000/query?natural_query=How%20many%20users%20completed%20a%20course%20in%20the%20last%2030%20days?"
+
+
+virltual env:
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+pip freeze > requirements.txt
+
+
+Postgres:
+docker run --name my_postgres_db -e POSTGRES_USER=admin -e POSTGRES_PASSWORD=admin -e POSTGRES_DB=datamart -p 5432:5432 -d postgres
+docker exec -it my_postgres_db psql -U admin -d datamart
+
+
+start model:
+ollama serve
+ollama run deepseek-r1
+
+
+
+issues:
+{
+    "model": "deepseek-r1",
+    "created_at": "2025-02-18T14:25:51.23307Z",
+    "response": "<think>\n\n</think>\n\nI only remember what we discuss in our current chat. Each conversation starts fresh to better protect user privacy. Feel free to tell me any specific preferences or topics you'd like me to focus on - I'll adjust accordingly.",
+    "done": true,
+    "done_reason": "stop",
+}
