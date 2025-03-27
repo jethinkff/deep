@@ -92,7 +92,7 @@ def generate_rag_answer(query, index, documents):
 
 
 # Process Workflow
-pdf_path = "/Users/jeff.chen/git/AI-deepseek/pdfs/LRRP-Landlord-Handbook.pdf"  
+pdf_path = "/Users/ddctu/git/deep/data/pdfs/LRRP-Landlord-Handbook.pdf"  
 documents = extract_text_from_pdf(pdf_path)
 
 
