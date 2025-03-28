@@ -3,16 +3,25 @@ import numpy as np
 import ollama
 import faiss
 import json
+from pathlib import Path
+
+
+def load_config(config_file="config.json"):
+    """Load configuration from a JSON file."""
+    config_path = Path(config_file)
+    if config_path.exists():
+        with open(config_file, "r") as f:
+            return json.load(f)
+    else:
+        raise FileNotFoundError(f"Config file '{config_file}' not found.")
+
 
 def extract_text_from_pdf(pdf_path):
     """Extract text from a PDF while preserving page numbers."""
     pdf_reader = pypdf.PdfReader(pdf_path)
     document_chunks = [{"text": page.extract_text(), "page": num + 1} 
                        for num, page in enumerate(pdf_reader.pages) if page.extract_text()]
-    # for i in document_chunks:
-    #     print(i)
-    #     print('\n')
-    # exit()
+
     return document_chunks
 
 def generate_embeddings_by_page(chunks):
@@ -20,6 +29,19 @@ def generate_embeddings_by_page(chunks):
     embeddings = [ollama.embeddings(model="nomic-embed-text", prompt=chunk["text"])["embedding"]
                   for chunk in chunks]
     return np.array(embeddings, dtype=np.float32)
+
+def load_index_and_metadata(knowledge_base_page):
+    """Load FAISS index and metadata from files if they exist."""
+    index_path = Path(knowledge_base_page)
+    metadata_path = Path("metadata.json")
+    if index_path.exists() and metadata_path.exists():
+        index = faiss.read_index(str(index_path))
+        with open(metadata_path, "r") as f:
+            metadata = json.load(f)
+        print("Loaded existing FAISS index and metadata.")
+        return index, metadata
+    else:
+        return None, None
 
 def store_embeddings(embeddings, documents):
     """Store embeddings in FAISS and save metadata for retrieval."""
@@ -72,13 +94,13 @@ def generate_rag_answer(query, index, documents):
     
     # Build the prompt for the LLM
     prompt = f"""
-        You are a knowledgeable assistant. Based on the following document excerpts, please answer the question with specific page references.
-
+    You are a knowledgeable assistant. Based on the following document excerpts, please answer the question with specific page references. 
         Document Excerpts:
         {context_text}
 
         Question: {query}
 
+        Do not include any chain-of-thought or internal reasoning in your final answer.
         Provide a clear and concise answer with citations (page numbers) for your response.
     """
     
@@ -91,18 +113,46 @@ def generate_rag_answer(query, index, documents):
 
 
 
-# Process Workflow
-pdf_path = "/Users/ddctu/git/deep/data/pdfs/LRRP-Landlord-Handbook.pdf"  
-documents = extract_text_from_pdf(pdf_path)
-
-
-
-# Generate embeddings and store in FAISS
-embeddings = generate_embeddings_by_page(documents)
-faiss_index = store_embeddings(embeddings, documents)
-
-query = "What is 2019 80% Area Median Income of 1 person in Hudson?"
-answer = generate_rag_answer(query, faiss_index, documents)
+if __name__ == "__main__":
+    config = load_config("config.json")
+    pdf_path = config.get("pdf_path")
+    knowledge_base_path = config.get("faiss_knowledge_base.index")
     
-print("Final Answer:")
-print(answer)
+    index, metadata = load_index_and_metadata("faiss_knowledge_base.index")
+    
+    # If index does not exist, process the PDF and store embeddings
+    if index is None:
+        documents = extract_text_from_pdf(pdf_path)
+        embeddings = generate_embeddings_by_page(documents)
+        index = store_embeddings(embeddings, documents)
+    else:
+        # If index exists, we need to reload the original documents
+        documents = extract_text_from_pdf(pdf_path)
+    
+    print("System ready. Enter your query below (type 'exit' to quit):")
+    while True:
+        user_query = input("Query: ").strip()
+        if user_query.lower() in {"exit", "quit"}:
+            break
+        answer = generate_rag_answer(user_query, index, documents)
+        print("\nFinal Answer:")
+        print(answer)
+        print("-" * 80)
+
+
+# Process Workflow
+# config = load_config("config.json")
+# pdf_path = config.get("pdf_path")
+# documents = extract_text_from_pdf(pdf_path)
+
+
+
+# # Generate embeddings and store in FAISS
+# embeddings = generate_embeddings_by_page(documents)
+# faiss_index = store_embeddings(embeddings, documents)
+
+# query = "What is 2019 80% Area Median Income of 1 person in Hudson?"
+# answer = generate_rag_answer(query, faiss_index, documents)
+    
+# print("Final Answer:")
+# print(answer)
