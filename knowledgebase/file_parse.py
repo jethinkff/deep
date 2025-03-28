@@ -21,6 +21,8 @@ def extract_text_from_pdf(pdf_path):
     pdf_reader = pypdf.PdfReader(pdf_path)
     document_chunks = [{"text": page.extract_text(), "page": num + 1} 
                        for num, page in enumerate(pdf_reader.pages) if page.extract_text()]
+    with open("doc.json", "w") as f:
+        json.dump(document_chunks, f)
 
     return document_chunks
 
