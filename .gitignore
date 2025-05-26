@@ -48,8 +48,9 @@ Thumbs.db
 *.flv
 *.mov
 *.wmv
-
+*.pdf
 *.json
+/data/pdfs
 
 
 #input files

@@ -1,6 +1,13 @@
+virltual env:
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+pip freeze > requirements.txt
+
+
 to start:
 uvicorn query_api:app --reload
-
+python3 -m uvicorn query_api:app --reload
 
 Ollama API test: 
 curl -X POST http://127.0.0.1:11434/api/generate \
@@ -10,11 +17,7 @@ Server api test:
 curl "http://127.0.0.1:8000/query?natural_query=How%20many%20users%20completed%20a%20course%20in%20the%20last%2030%20days?"
 
 
-virltual env:
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-pip freeze > requirements.txt
+
 
 
 Postgres:
